@@ -1,0 +1,540 @@
+{
+  "name": "ai automtion project 1",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -944,
+        -240
+      ],
+      "id": "926bfa1c-d98c-47c5-a63c-d72aed936aa8",
+      "name": "Telegram Trigger",
+      "webhookId": "a1954af0-708b-4bbc-9088-b7713861ccb9",
+      "credentials": {
+        "telegramApi": {
+          "id": "MjyK4BeOxoebGiuy",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "50437123-c1d5-45c1-8577-70f34b46442a",
+              "name": "Name",
+              "value": "={{ $json.message.chat.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "227affd4-d62d-4288-a2ea-2a375294a06b",
+              "name": "Message",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -720,
+        -240
+      ],
+      "id": "46896dba-fab2-4f2b-a9da-9b5d62791775",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}You are an AI assistant responsible for lead classification.\n\nAnalyze the user's message and classify it into ONE of the following categories:\n- hot   → clear intent, urgent need, ready to take action\n- warm  → interested but exploring, needs more discussion\n- cold  → vague, low intent, just browsing or greeting\n\nReturn ONLY valid JSON with the following fields:\n- lead_category: \"hot\" | \"warm\" | \"cold\"\n- confidence_score: number between 0 and 1\n- ai_summary: a short, clear summary in 1 sentence\n\nDo NOT add any extra text outside the JSON.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        80,
+        -48
+      ],
+      "id": "569685d0-d49c-48fd-ba1e-304545f543f8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        176
+      ],
+      "id": "463b1fcd-3ec5-4a44-a6f9-c928338d135a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "LJskgU4sFrLA0p1J",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "=hot",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "bd929c29-b603-4ffd-a5d5-5999323e82ba"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f2e96a8f-5089-47f3-bf35-caaaaccbca26",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "warm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a4e8d73c-5c38-4274-b7be-33ee5610c241",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "cool",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        -64
+      ],
+      "id": "2047e4fc-5ab7-4196-8b81-0cfbde232ca4",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an intent classification assistant.\n\nAnalyze the user message and return JSON with:\n\nintent_type: one of [greeting, business_query, support, spam]\n\n\nUser message: {{ $json.Message }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -496,
+        -240
+      ],
+      "id": "2fb14ca2-b9f7-483a-9fc0-1296ced442d5",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -432,
+        -16
+      ],
+      "id": "a2b6bfed-feb2-48a7-956e-47dfa0ee3f71",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "LJskgU4sFrLA0p1J",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1133631f-e5f4-45ab-ae66-f7182304824e",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "greeting",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "15209f75-0830-4772-b692-09e7b13f901b",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "spam",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -144,
+        -240
+      ],
+      "id": "f6759527-5911-45b8-9906-20e9d2a20adc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "Hi 👋 Thanks for reaching out! Could you please tell me a bit more about what you’re looking for?”",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        -336
+      ],
+      "id": "8fcd4af6-ebfb-4660-85eb-ca4d9d849481",
+      "name": "Send a text message",
+      "webhookId": "cdd52d7b-b842-489b-bc1b-8607729f76a5",
+      "credentials": {
+        "telegramApi": {
+          "id": "MjyK4BeOxoebGiuy",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "=Hi {{ $('Telegram Trigger').item.json.message.from.first_name }} , Thanks for your message! Based on what you shared, I believe we can definitely help you with this. Would you like to schedule a quick call or share more details so we can move forward?",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        -288
+      ],
+      "id": "4408f146-671c-4a38-9eb1-9fc1a10ffe40",
+      "name": "Send a text message1",
+      "webhookId": "5b24a6cd-218d-445c-9a11-1ffcf2cd490c",
+      "credentials": {
+        "telegramApi": {
+          "id": "MjyK4BeOxoebGiuy",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "=Hi {{ $('Telegram Trigger').item.json.message.from.first_name }}, Thanks for reaching out! I’d be happy to understand your requirements better. Could you please tell me a bit more about your use case or goals?",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        -96
+      ],
+      "id": "70019d40-aa49-4cbe-9af0-0ca3be74eca1",
+      "name": "Send a text message2",
+      "webhookId": "2a9eed29-0448-42ca-8c3a-27568a2ca070",
+      "credentials": {
+        "telegramApi": {
+          "id": "MjyK4BeOxoebGiuy",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "=Hi {{ $('Telegram Trigger').item.json.message.from.first_name }}, Thanks for contacting us! Whenever you’re ready, feel free to share more details and we’ll be happy to assist.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        112
+      ],
+      "id": "73cad89f-6264-4ad3-a375-6230bfe58329",
+      "name": "Send a text message3",
+      "webhookId": "08a721f8-4af8-44d4-96fd-b075ce5b9505",
+      "credentials": {
+        "telegramApi": {
+          "id": "MjyK4BeOxoebGiuy",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "jeshwanth1305@gmail.com",
+        "subject": "🚨 Hot Lead Alert – Immediate Attention Required",
+        "emailType": "text",
+        "message": "=Hi,  You have received a HOT lead that requires immediate attention.  Name:{{ $json.result.chat.first_name }}  Message:{{ $('Telegram Trigger').item.json.message.text }} {{ $('AI Agent').item.json.output }}  Please review and respond as soon as possible.  – n8n Automation System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        -288
+      ],
+      "id": "8e1dde5d-9f28-4cb4-ae2b-7ea785989099",
+      "name": "Send a message",
+      "webhookId": "f5d19b1b-0509-489b-a74b-fdcbae0aa8c1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AUvPedxavTbpnMfl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        432,
+        -48
+      ],
+      "id": "f27dbf27-6c98-4663-9993-0d8a3797b8bc",
+      "name": "Get many databases",
+      "credentials": {
+        "notionApi": {
+          "id": "c2lcmc4qNobYstaL",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Get many databases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many databases": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "abdb3782-f146-4752-bd84-bc95cf9fdaa1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7c54e790aea0eca7255c6e31ca40d886bd50f2599cff7c3716cb8c567d92d382"
+  },
+  "id": "YQ3XrUWzkAcc3kSk",
+  "tags": []
+}
